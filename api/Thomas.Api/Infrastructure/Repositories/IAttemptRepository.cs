@@ -4,6 +4,16 @@ namespace Thomas.Api.Infrastructure.Repositories;
 
 public interface IAttemptRepository
 {
+    // IAttemptRepository
+    Task CompleteSectionIfDoneAsync(long attemptId, int sectionId, CancellationToken ct);
+
+    // IAttemptRepository
+    Task<bool> QuestionBelongsToAttemptAsync(long attemptId, int sectionId, int questionId, CancellationToken ct);
+    Task<bool> HasAnsweredAsync(long attemptId, int questionId, CancellationToken ct);
+
+    // IAttemptRepository
+    Task StartSectionAsync(long attemptId, int sectionId, CancellationToken ct);
+
     Task<Exam?> GetActiveExamByCodeAsync(string code, CancellationToken ct);
     Task<long> CreateAttemptAsync(Attempt attempt, IEnumerable<AttemptSection> sections, CancellationToken ct);
 

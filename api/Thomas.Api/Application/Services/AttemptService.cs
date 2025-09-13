@@ -3,6 +3,7 @@ using System.Text.Json;
 using Thomas.Api.Application.Dtos;
 using Thomas.Api.Application.Interfaces;
 using Thomas.Api.Domain.Entities;
+using Thomas.Api.Infrastructure;
 using Thomas.Api.Infrastructure.Repositories;
 
 namespace Thomas.Api.Application.Services;
@@ -10,11 +11,21 @@ namespace Thomas.Api.Application.Services;
 public class AttemptService : IAttemptService
 {
     private readonly IAttemptRepository _repo;
+    private readonly ThomasDbContext _db;   // <-- inject DbContext
 
-    public AttemptService(IAttemptRepository repo) => _repo = repo;
+    public AttemptService(IAttemptRepository repo, ThomasDbContext db)
+    {
+        _repo = repo;
+        _db = db;
+    }
+    // AttemptService.cs
+    public Task StartSectionAsync(long attemptId, int sectionId, CancellationToken ct)
+        => _repo.StartSectionAsync(attemptId, sectionId, ct);
+
 
     public async Task<CreateAttemptResponse> CreateAsync(CreateAttemptRequest req, Guid userId, CancellationToken ct)
     {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var exam = await _repo.GetActiveExamByCodeAsync(req.ExamCode, ct)
                    ?? throw new InvalidOperationException("Exam not found or inactive.");
 
@@ -69,6 +80,7 @@ public class AttemptService : IAttemptService
                 await _repo.AddAttemptQuestionsAsync(attemptId, s.Id, ids, ct);
             }
         }
+        await tx.CommitAsync(ct);
 
         return new CreateAttemptResponse
         {
@@ -148,6 +160,7 @@ public class AttemptService : IAttemptService
             TimeToAnswerMs = req.TimeToAnswerMs
         };
         await _repo.SaveAnswerAsync(answer, ct);
+        await _repo.CompleteSectionIfDoneAsync(attemptId, req.ExamSectionId, ct);
 
         return new SubmitAnswerResult { IsCorrect = isCorrect, CorrectOptionIds = (mode == AttemptModeDto.Practice) ? correctIds : null };
     }

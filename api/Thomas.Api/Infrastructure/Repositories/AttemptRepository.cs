@@ -7,6 +7,55 @@ public class AttemptRepository : IAttemptRepository
 {
     private readonly ThomasDbContext _db;
     public AttemptRepository(ThomasDbContext db) => _db = db;
+    
+    public async Task CompleteSectionIfDoneAsync(long attemptId, int sectionId, CancellationToken ct)
+    {
+        var anyUnanswered = await _db.AttemptQuestions
+            .Where(aq => aq.AttemptId == attemptId && aq.ExamSectionId == sectionId)
+            .AnyAsync(aq => !_db.AttemptAnswers.Any(aa => aa.AttemptId == attemptId && aa.QuestionId == aq.QuestionId), ct);
+
+        if (!anyUnanswered)
+        {
+            var s = await _db.AttemptSections.FirstAsync(x => x.AttemptId == attemptId && x.ExamSectionId == sectionId, ct);
+            if (s.Status != SectionStatus.Completed)
+            {
+                var (raw, max) = await ComputeSectionScoresAsync(attemptId, sectionId, ct);
+                s.RawScore = raw; s.MaxScore = max;
+                s.Status = SectionStatus.Completed;
+                s.CompletedAt = DateTime.UtcNow;
+                s.TimeSpentSeconds = s.StartedAt is null ? null : (int?)(DateTime.UtcNow - s.StartedAt.Value).TotalSeconds;
+                await _db.SaveChangesAsync(ct);
+            }
+        }
+    }
+
+     
+    public Task<bool> QuestionBelongsToAttemptAsync(long attemptId, int sectionId, int questionId, CancellationToken ct)
+        => _db.AttemptQuestions
+            .AnyAsync(aq => aq.AttemptId == attemptId && aq.ExamSectionId == sectionId && aq.QuestionId == questionId, ct);
+
+    public Task<bool> HasAnsweredAsync(long attemptId, int questionId, CancellationToken ct)
+        => _db.AttemptAnswers
+            .AnyAsync(a => a.AttemptId == attemptId && a.QuestionId == questionId, ct);
+
+    
+    public async Task StartSectionAsync(long attemptId, int sectionId, CancellationToken ct)
+    {
+        var s = await _db.AttemptSections
+            .FirstAsync(x => x.AttemptId == attemptId && x.ExamSectionId == sectionId, ct);
+        if (s.Status == SectionStatus.NotStarted)
+        {
+            s.Status = SectionStatus.InProgress;
+            s.StartedAt = DateTime.UtcNow;
+
+            var attempt = await _db.Attempts.FirstAsync(a => a.Id == attemptId, ct);
+            attempt.Status = AttemptStatus.InProgress;
+            attempt.StartedAt ??= DateTime.UtcNow;
+
+            await _db.SaveChangesAsync(ct);
+        }
+    }
+
 
     public Task<Exam?> GetActiveExamByCodeAsync(string code, CancellationToken ct) =>
         _db.Exams.AsNoTracking()
