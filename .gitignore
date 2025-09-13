@@ -1,0 +1,93 @@
+﻿# =========================
+# Repo-wide .gitignore
+# =========================
+
+# --- Visual Studio / .NET ---
+.vs/
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
+**/TestResult.xml
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.dbmdl
+*.jfm
+*.opendb
+*.trx
+*.logger.json
+*.nupkg
+*.snupkg
+# optional: ignore generated sources if you have any codegens
+# **/Generated/
+
+# --- JetBrains Rider / ReSharper ---
+.idea/
+_ReSharper.*/
+*.sln.iml
+*.DotSettings.user
+
+# --- VS Code (workspace-specific) ---
+.vscode/
+
+# --- Node / Angular ---
+**/node_modules/
+**/dist/
+**/tmp/
+**/.angular/
+**/.cache/
+**/coverage/
+**/.nyc_output/
+**/.eslintcache
+**/.stylelintcache
+**/cypress/videos/
+**/cypress/screenshots/
+**/playwright-report/
+**/test-results/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- Office temp files ---
+~$*
+~WRL*.tmp
+
+# --- Generic temp/swap ---
+*.tmp
+*.swp
+*.swo
+
+# --- Environment & secrets (keep out of git) ---
+*.env
+*.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/secrets.json
+
+# --- AppSettings (local/dev variants only) ---
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+
+# --- Local SQL Server database files (if any) ---
+*.mdf
+*.ldf
+*.ndf
+
+# --- Misc build artifacts ---
+**/build/
