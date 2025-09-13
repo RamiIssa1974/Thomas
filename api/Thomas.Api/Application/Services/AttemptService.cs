@@ -123,6 +123,14 @@ public class AttemptService : IAttemptService
 
     public async Task<SubmitAnswerResult> SubmitAnswerAsync(long attemptId, AttemptModeDto mode, SubmitAnswerRequest req, CancellationToken ct)
     {
+        // אימות שהשאלה שייכת לניסיון ולמקטע
+        if (!await _repo.QuestionBelongsToAttemptAsync(attemptId, req.ExamSectionId, req.QuestionId, ct))
+            throw new InvalidOperationException("Question does not belong to this attempt/section.");
+
+        // מניעת כפל תשובה
+        if (await _repo.HasAnsweredAsync(attemptId, req.QuestionId, ct))
+            throw new InvalidOperationException("Question already answered.");
+
         // load question & correct options
         var q = await _repo.GetQuestionWithOptionsAsync(req.QuestionId, ct)
                 ?? throw new InvalidOperationException("Question not found.");

@@ -4,7 +4,7 @@ namespace Thomas.Api.Application.Interfaces;
 
 public interface IAttemptService
 {
-    // IAttemptService
+
     Task StartSectionAsync(long attemptId, int sectionId, CancellationToken ct);
 
     Task<CreateAttemptResponse> CreateAsync(CreateAttemptRequest req, Guid userId, CancellationToken ct);
