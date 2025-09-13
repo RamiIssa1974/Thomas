@@ -1,11 +1,20 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Thomas.Api.Application.Interfaces;
 using Thomas.Api.Application.Services;
 using Thomas.Api.Infrastructure;
 using Thomas.Api.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
-
+const string CorsDev = "CorsDev";
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy(CorsDev, p =>
+        p.WithOrigins("http://localhost:4200", "https://localhost:4200") // Angular dev
+         .AllowAnyHeader()
+         .AllowAnyMethod()
+         .AllowCredentials() // נשאיר ON כדי שבעתיד יהיה אפשר קב׳/JWT עם cookies
+    );
+});
 // Minimal services; keep Swagger ready from day one
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -36,7 +45,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors(CorsDev);
 app.MapControllers(); 
 
 app.Run();
